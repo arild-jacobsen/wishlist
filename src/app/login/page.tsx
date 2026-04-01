@@ -1,3 +1,15 @@
+// Login page — /login
+//
+// Client Component: the two-step OTP login flow requires local state.
+//
+// Step 1 ("email"): user enters their email → POST /api/auth/request-otp
+//   The server generates a code and (in dev) logs it to the console.
+//   We always advance to step 2 regardless of whether the email is allowed,
+//   to avoid leaking the whitelist.
+//
+// Step 2 ("otp"): user enters the 6-digit code → signIn("otp", { email, token })
+//   NextAuth's Credentials provider verifies the code and creates a JWT session.
+//   On success, the user is redirected to /dashboard.
 "use client";
 
 import { useState } from "react";
@@ -8,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  // Controls which form step is shown: "email" input or "otp" input.
   const [step, setStep] = useState<"email" | "otp">("email");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

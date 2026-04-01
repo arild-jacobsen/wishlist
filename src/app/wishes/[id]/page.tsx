@@ -1,3 +1,15 @@
+// Wish detail page — /wishes/[id]
+//
+// Server Component: reads wish, claims, and comments directly from the database.
+// Renders differently depending on whether the viewer is the wish owner:
+//
+//   Owner sees:   wish details, edit button
+//   Non-owner sees: wish details, who claimed it, secret comments, claim toggle
+//
+// The `isOwner` flag computed here is the primary gate for all owner/non-owner
+// UI differences. The library functions (getClaimsForWish, getSecretComments)
+// also enforce this on the data side by returning null for the owner.
+
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { getWishById } from "@/lib/wishes";
@@ -18,30 +30,42 @@ export default async function WishPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // params is a Promise in Next.js 15 — must be awaited.
   const { id } = await params;
   const session = await auth();
   const viewerId = Number(session!.user!.id);
   const db = getDb();
 
   const wish = getWishById(db, Number(id));
+  // Next.js notFound() renders the nearest not-found.tsx (or a default 404 page).
   if (!wish) notFound();
 
   const isOwner = wish.user_id === viewerId;
+
+  // Both of these return null when the viewer is the wish owner (privacy rule).
+  // null values mean the sections below are simply not rendered.
   const claims = getClaimsForWish(db, wish.id, viewerId);
   const comments = getSecretComments(db, wish.id, viewerId);
 
+  // Look up the wish owner's email to display "X's wish" in the header.
   const owner = db
     .prepare("SELECT id, email FROM users WHERE id = ?")
     .get(wish.user_id) as UserRow | undefined;
 
+  // Resolve claimer IDs to email addresses for display.
+  // If claims is null (viewer is owner) we skip this entirely.
   const claimerEmails = claims
     ? (db
         .prepare(
+          // Build parameterised IN clause from the claimer IDs.
+          // Fall back to "NULL" (matches nothing) if there are no claims.
           `SELECT email FROM users WHERE id IN (${claims.map(() => "?").join(",") || "NULL"})`
         )
         .all(...claims.map((c) => c.user_id)) as { email: string }[])
     : [];
 
+  // Build a { userId → email } map so each comment can show its author.
+  // We deduplicate user IDs with a Set to avoid fetching the same user twice.
   const commentersMap = comments
     ? Object.fromEntries(
         (
@@ -58,6 +82,8 @@ export default async function WishPage({
       )
     : {};
 
+  // Does the current viewer already have a claim on this wish?
+  // Passed to WishActions so it can show "Remove my claim" vs "I'll get this!".
   const myClaimExists = claims?.some((c) => c.user_id === viewerId) ?? false;
 
   return (
@@ -72,7 +98,7 @@ export default async function WishPage({
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-8 space-y-6">
-        {/* Wish card */}
+        {/* Wish card — visible to everyone */}
         <div className="rounded-2xl bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -94,6 +120,7 @@ export default async function WishPage({
               <ul className="space-y-1">
                 {wish.links.map((link) => (
                   <li key={link}>
+                    {/* rel="noopener noreferrer" prevents the new tab from accessing window.opener */}
                     <a
                       href={link}
                       target="_blank"
@@ -108,6 +135,7 @@ export default async function WishPage({
             </div>
           )}
 
+          {/* Edit button — owner only */}
           {isOwner && (
             <div className="flex gap-2 pt-2">
               <Link
@@ -120,7 +148,7 @@ export default async function WishPage({
           )}
         </div>
 
-        {/* Claim section — only shown to non-owners */}
+        {/* Claim section — non-owner only (owner must not see who claimed their wish) */}
         {!isOwner && (
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold text-gray-700">Who&apos;s getting this?</h3>
@@ -135,6 +163,10 @@ export default async function WishPage({
             ) : (
               <p className="mb-4 text-sm text-gray-400">Nobody has claimed this yet.</p>
             )}
+            {/*
+              WishActions is a Client Component (needs onClick).
+              It calls POST/DELETE /api/wishes/[id]/claim and refreshes the page.
+            */}
             <WishActions
               wishId={wish.id}
               isClaimed={myClaimExists}
@@ -142,7 +174,7 @@ export default async function WishPage({
           </div>
         )}
 
-        {/* Secret comments — only shown to non-owners */}
+        {/* Secret comments section — non-owner only */}
         {!isOwner && (
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold text-gray-700">
@@ -154,6 +186,7 @@ export default async function WishPage({
               <ul className="mb-4 space-y-3">
                 {comments.map((comment) => (
                   <li key={comment.id} className="rounded-lg bg-gray-50 p-3">
+                    {/* Look up commenter email from the map we built above */}
                     <p className="text-xs font-medium text-gray-500 mb-1">
                       {commentersMap[comment.user_id] ?? "Unknown"}
                     </p>
@@ -165,6 +198,7 @@ export default async function WishPage({
               <p className="mb-4 text-sm text-gray-400">No comments yet.</p>
             )}
 
+            {/* SecretCommentForm is a Client Component (needs form submission) */}
             <SecretCommentForm wishId={wish.id} />
           </div>
         )}
@@ -173,6 +207,7 @@ export default async function WishPage({
   );
 }
 
+// Renders a coloured pill badge for a wish rating.
 function RatingBadge({ rating }: { rating: string }) {
   const styles: Record<string, string> = {
     "It'd be nice": "bg-gray-100 text-gray-600",

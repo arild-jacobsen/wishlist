@@ -1,3 +1,8 @@
+// SecretCommentForm — inline form for posting a secret comment on a wish.
+//
+// Client Component: needs form state and submit handler.
+// Rendered only for non-owners (the parent server component checks isOwner).
+// After posting, clears the input and refreshes server component data.
 "use client";
 
 import { useState, useTransition } from "react";

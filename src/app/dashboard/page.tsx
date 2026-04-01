@@ -1,3 +1,14 @@
+// Dashboard — the main page after login.
+//
+// This is a Server Component: it runs on the server, reads directly from the
+// database, and sends fully-rendered HTML to the browser. No loading states
+// or client-side data fetching.
+//
+// The page lists all registered users and their wishes. For each wish, it
+// attaches claim information — but because getClaimsForWish returns null when
+// the viewer is the wish owner, the "Claimed" badge is automatically hidden
+// for the viewer's own wishes.
+
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { getWishesByUser } from "@/lib/wishes";
@@ -11,14 +22,21 @@ interface UserRow {
 }
 
 export default async function DashboardPage() {
+  // auth() reads the JWT cookie and returns the current user's session.
+  // The ! assertion is safe here because the middleware redirects to /login
+  // if there is no valid session.
   const session = await auth();
   const viewerId = Number(session!.user!.id);
   const db = getDb();
 
+  // Fetch all users so we can show everyone's wishlists on one page.
   const users = db
     .prepare("SELECT id, email FROM users ORDER BY email")
     .all() as UserRow[];
 
+  // For each user, load their wishes and attach claim visibility info.
+  // getClaimsForWish returns null when viewerId === wish.user_id, so
+  // `claims !== null` in the template is what guards the "Claimed" badge.
   const usersWithWishes = users.map((user) => {
     const wishes = getWishesByUser(db, user.id);
     const wishesWithClaims = wishes.map((wish) => ({
@@ -43,6 +61,7 @@ export default async function DashboardPage() {
             >
               + Add wish
             </Link>
+            {/* SignOutButton is a Client Component because it needs an onClick handler */}
             <SignOutButton />
           </div>
         </div>
@@ -76,7 +95,11 @@ export default async function DashboardPage() {
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <RatingBadge rating={wish.rating} />
-                          {/* Show claim status only to non-owners */}
+                          {/*
+                            wish.claims is null when the viewer is the owner
+                            (returned by getClaimsForWish), so this badge is
+                            automatically hidden for the owner's own wishes.
+                          */}
                           {wish.claims !== null && wish.claims.length > 0 && (
                             <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                               Claimed
@@ -96,6 +119,8 @@ export default async function DashboardPage() {
   );
 }
 
+// Renders a coloured pill badge for a wish rating.
+// Colours are consistent throughout the app: gray / yellow / rose.
 function RatingBadge({ rating }: { rating: string }) {
   const styles: Record<string, string> = {
     "It'd be nice": "bg-gray-100 text-gray-600",
