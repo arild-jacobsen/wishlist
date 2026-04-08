@@ -224,6 +224,45 @@ returns `403 Forbidden`.
 
 ---
 
+---
+
+## Dev utilities
+
+These endpoints are only available when `NODE_ENV !== 'production'`. They return
+`404 Not Found` in production.
+
+### `POST /api/dev/seed`
+
+Creates a fixed set of dummy users (`alice@example.com`, `bob@example.com`,
+`carol@example.com`) each with three wishes spanning all three rating levels.
+Idempotent: skips users that already exist.
+
+**Does not require authentication.**
+
+**Response:** `201 Created`
+```json
+{
+  "created": [{ "email": "alice@example.com", "userId": 4, "wishesCreated": 3 }],
+  "skipped": ["bob@example.com"]
+}
+```
+
+---
+
+### `DELETE /api/dev/seed`
+
+Removes all users whose email ends in `@example.com`, along with their wishes,
+claims, and secret comments (cascade).
+
+**Does not require authentication.**
+
+**Response:**
+```json
+{ "deletedUsers": 3 }
+```
+
+---
+
 ### `POST /api/wishes/[id]/comments`
 
 Adds a secret comment to a wish. The wish owner cannot post comments.
