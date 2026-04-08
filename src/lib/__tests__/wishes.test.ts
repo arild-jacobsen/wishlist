@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, createTestUser } from "@/test/helpers";
+import { createTestDb, createTestUser, createTestList } from "@/test/helpers";
 import type { Db } from "@/lib/db";
 import {
   createWish,
@@ -13,16 +13,19 @@ import {
 let db: Db;
 let userId: number;
 let otherUserId: number;
+let listId: number;
 
 beforeEach(() => {
   db = createTestDb();
   userId = createTestUser(db, "jacobsen.arild@gmail.com");
   otherUserId = createTestUser(db, "arild.jacobsen@outlook.com");
+  listId = createTestList(db, userId);
 });
 
 describe("createWish", () => {
   it("creates a wish with required fields", () => {
     const wish = createWish(db, userId, {
+      list_id: listId,
       name: "New bicycle",
       rating: "Would make me happy",
     });
@@ -32,10 +35,12 @@ describe("createWish", () => {
     expect(wish.description).toBeNull();
     expect(wish.links).toEqual([]);
     expect(wish.user_id).toBe(userId);
+    expect(wish.list_id).toBe(listId);
   });
 
   it("creates a wish with all fields", () => {
     const wish = createWish(db, userId, {
+      list_id: listId,
       name: "Fancy coffee machine",
       description: "The one with the milk frother",
       links: ["https://example.com/coffee"],
@@ -49,6 +54,7 @@ describe("createWish", () => {
   it("rejects invalid ratings", () => {
     expect(() =>
       createWish(db, userId, {
+        list_id: listId,
         name: "Test",
         rating: "meh" as WishRating,
       })
@@ -58,6 +64,7 @@ describe("createWish", () => {
   it("requires a name", () => {
     expect(() =>
       createWish(db, userId, {
+        list_id: listId,
         name: "",
         rating: "It'd be nice",
       })
@@ -67,15 +74,16 @@ describe("createWish", () => {
 
 describe("getWishesByUser", () => {
   it("returns all wishes for a user", () => {
-    createWish(db, userId, { name: "Wish 1", rating: "It'd be nice" });
-    createWish(db, userId, { name: "Wish 2", rating: "Would make me happy" });
+    createWish(db, userId, { list_id: listId, name: "Wish 1", rating: "It'd be nice" });
+    createWish(db, userId, { list_id: listId, name: "Wish 2", rating: "Would make me happy" });
     const wishes = getWishesByUser(db, userId);
     expect(wishes).toHaveLength(2);
   });
 
   it("does not return wishes from other users", () => {
-    createWish(db, userId, { name: "My wish", rating: "It'd be nice" });
-    createWish(db, otherUserId, { name: "Their wish", rating: "It'd be nice" });
+    const otherListId = createTestList(db, otherUserId, "Other List");
+    createWish(db, userId, { list_id: listId, name: "My wish", rating: "It'd be nice" });
+    createWish(db, otherUserId, { list_id: otherListId, name: "Their wish", rating: "It'd be nice" });
     const wishes = getWishesByUser(db, userId);
     expect(wishes).toHaveLength(1);
     expect(wishes[0].name).toBe("My wish");
@@ -90,6 +98,7 @@ describe("getWishesByUser", () => {
 describe("getWishById", () => {
   it("returns the wish by id", () => {
     const created = createWish(db, userId, {
+      list_id: listId,
       name: "Book",
       rating: "It'd be nice",
     });
@@ -106,6 +115,7 @@ describe("getWishById", () => {
 describe("deleteWish", () => {
   it("deletes a wish owned by the user", () => {
     const wish = createWish(db, userId, {
+      list_id: listId,
       name: "Delete me",
       rating: "It'd be nice",
     });
@@ -115,6 +125,7 @@ describe("deleteWish", () => {
 
   it("throws when a non-owner tries to delete", () => {
     const wish = createWish(db, userId, {
+      list_id: listId,
       name: "Mine",
       rating: "It'd be nice",
     });
@@ -125,6 +136,7 @@ describe("deleteWish", () => {
 describe("updateWish", () => {
   it("updates wish fields", () => {
     const wish = createWish(db, userId, {
+      list_id: listId,
       name: "Old name",
       rating: "It'd be nice",
     });
@@ -134,6 +146,7 @@ describe("updateWish", () => {
 
   it("throws when a non-owner tries to update", () => {
     const wish = createWish(db, userId, {
+      list_id: listId,
       name: "Mine",
       rating: "It'd be nice",
     });

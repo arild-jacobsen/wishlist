@@ -31,14 +31,20 @@ There are no passwords. Every time you log in:
 ### The dashboard
 
 After logging in you land on the dashboard. It shows everyone's wish lists in
-one place. You can see:
+one place, grouped by list. You can see:
 
-- **Your own wishes** — listed under "My wishes"
-- **Other people's wishes** — listed under their email address
+- **Your own lists** — under "My wish lists", each showing their wishes
+- **Other people's lists** — under their email address
 - A **"Claimed"** badge on any wish that someone has already volunteered to buy
   *(you won't see this badge on your own wishes — the surprise is protected)*
 
 Click any wish to see its full details.
+
+### Creating a list
+
+Before adding wishes, create at least one list to organise them into. Click
+**+ New list** in the top-right corner and give it a name (e.g. "Birthday",
+"Kitchen", "Tech"). The description is optional.
 
 ### Adding a wish
 
@@ -46,10 +52,13 @@ Click **+ Add wish** in the top-right corner. Fill in:
 
 | Field | Required | Description |
 |---|---|---|
+| List | Yes | Which of your lists this wish belongs to |
 | Name | Yes | What you want, e.g. "New running shoes" |
 | Description | No | Extra details to help people find the right thing |
 | Links | No | One URL per line — product pages, wishlists, etc. |
 | How much do you want this? | Yes | Choose a rating (see below) |
+
+If you haven't created a list yet, the form will prompt you to create one first.
 
 **Wish ratings:**
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
-import { getWishById, deleteWish, updateWish, type WishRating } from "@/lib/wishes";
+import { getListById, updateList, deleteList } from "@/lib/lists";
 
 export async function GET(
   _request: NextRequest,
@@ -14,9 +14,9 @@ export async function GET(
 
   const { id } = await params;
   const db = getDb();
-  const wish = getWishById(db, Number(id));
-  if (!wish) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(wish);
+  const list = getListById(db, Number(id));
+  if (!list) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(list);
 }
 
 export async function PATCH(
@@ -33,19 +33,13 @@ export async function PATCH(
 
   try {
     const db = getDb();
-    const wish = updateWish(db, Number(id), Number(session.user.id), {
-      list_id: body.list_id,
+    const list = updateList(db, Number(id), Number(session.user.id), {
       name: body.name,
       description: body.description,
-      links: body.links,
-      rating: body.rating as WishRating | undefined,
     });
-    return NextResponse.json(wish);
+    return NextResponse.json(list);
   } catch (e) {
-    return NextResponse.json(
-      { error: (e as Error).message },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
 }
 
@@ -62,12 +56,15 @@ export async function DELETE(
 
   try {
     const db = getDb();
-    deleteWish(db, Number(id), Number(session.user.id));
+    deleteList(db, Number(id), Number(session.user.id));
     return new NextResponse(null, { status: 204 });
   } catch (e) {
+    // SQLite's FK RESTRICT error when wishes still exist in the list
+    const msg = (e as Error).message;
+    const isFkViolation = msg.includes("FOREIGN KEY constraint failed");
     return NextResponse.json(
-      { error: (e as Error).message },
-      { status: 400 }
+      { error: isFkViolation ? "Cannot delete a list that still has wishes" : msg },
+      { status: isFkViolation ? 409 : 400 }
     );
   }
 }

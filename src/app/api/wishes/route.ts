@@ -21,11 +21,16 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, description, links, rating } = body;
+  const { list_id, name, description, links, rating } = body;
+
+  if (!list_id || typeof list_id !== "number") {
+    return NextResponse.json({ error: "list_id is required" }, { status: 400 });
+  }
 
   try {
     const db = getDb();
     const wish = createWish(db, Number(session.user.id), {
+      list_id,
       name,
       description,
       links,

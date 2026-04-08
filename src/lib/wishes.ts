@@ -29,6 +29,7 @@ export const WISH_RATINGS: WishRating[] = [
 export interface Wish {
   id: number;
   user_id: number;
+  list_id: number;
   name: string;
   description: string | null;
   links: string[];       // Parsed from the JSON string stored in SQLite
@@ -42,6 +43,7 @@ export interface Wish {
 interface WishRow {
   id: number;
   user_id: number;
+  list_id: number;
   name: string;
   description: string | null;
   links: string;         // Raw JSON string, e.g. '["https://example.com"]'
@@ -57,6 +59,7 @@ function parseWish(row: WishRow): Wish {
 
 // Input accepted by createWish. description, links are optional.
 export interface CreateWishInput {
+  list_id: number;
   name: string;
   description?: string;
   links?: string[];
@@ -70,6 +73,9 @@ export function createWish(
   userId: number,
   input: CreateWishInput
 ): Wish {
+  if (!input.list_id) {
+    throw new Error("list_id is required");
+  }
   if (!input.name || input.name.trim() === "") {
     throw new Error("Wish name is required");
   }
@@ -81,12 +87,13 @@ export function createWish(
   // and created_at timestamp, so we don't need a follow-up SELECT.
   const row = db
     .prepare(
-      `INSERT INTO wishes (user_id, name, description, links, rating)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO wishes (user_id, list_id, name, description, links, rating)
+       VALUES (?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
     .get(
       userId,
+      input.list_id,
       input.name.trim(),
       input.description ?? null,         // NULL stored when no description given
       JSON.stringify(input.links ?? []), // Always store valid JSON, default to empty array
@@ -142,6 +149,7 @@ export function updateWish(
 
   // Merge: use provided values where given, fall back to current values.
   const updated = {
+    list_id: input.list_id ?? wish.list_id,
     name: input.name ?? wish.name,
     description: input.description ?? wish.description,
     links: input.links ?? wish.links,
@@ -158,11 +166,12 @@ export function updateWish(
 
   const row = db
     .prepare(
-      `UPDATE wishes SET name = ?, description = ?, links = ?, rating = ?
+      `UPDATE wishes SET list_id = ?, name = ?, description = ?, links = ?, rating = ?
        WHERE id = ?
        RETURNING *`
     )
     .get(
+      updated.list_id,
       updated.name.trim(),
       updated.description,
       JSON.stringify(updated.links),

@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
+// Edit wish form.
+//
+// Fetches the user's lists on mount so the list picker is populated.
+// Pre-selects the wish's current list. Submits list_id as part of the
+// PATCH body so wishes can be moved between lists.
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { WISH_RATINGS, type WishRating, type Wish } from "@/lib/wishes";
+import { ListSelect } from "@/components/ListSelect";
+import type { List } from "@/lib/lists";
 
 export function EditWishForm({ wish }: { wish: Wish }) {
   const router = useRouter();
+  const [lists, setLists] = useState<List[]>([]);
+  const [listId, setListId] = useState<number | "">(wish.list_id);
   const [name, setName] = useState(wish.name);
   const [description, setDescription] = useState(wish.description ?? "");
   const [linksText, setLinksText] = useState(wish.links.join("\n"));
   const [rating, setRating] = useState<WishRating>(wish.rating);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/lists")
+      .then((r) => r.json())
+      .then((data: List[]) => setLists(data));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +44,7 @@ export function EditWishForm({ wish }: { wish: Wish }) {
       const res = await fetch(`/api/wishes/${wish.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, links, rating }),
+        body: JSON.stringify({ list_id: listId, name, description, links, rating }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -62,6 +78,10 @@ export function EditWishForm({ wish }: { wish: Wish }) {
 
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
+      )}
+
+      {lists.length > 0 && (
+        <ListSelect lists={lists} value={listId} onChange={setListId} />
       )}
 
       <div>

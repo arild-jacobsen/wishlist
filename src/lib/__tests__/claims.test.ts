@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, createTestUser } from "@/test/helpers";
+import { createTestDb, createTestUser, createTestList } from "@/test/helpers";
 import type { Db } from "@/lib/db";
 import { createWish } from "@/lib/wishes";
 import {
@@ -20,7 +20,9 @@ beforeEach(() => {
   ownerId = createTestUser(db, "jacobsen.arild@gmail.com");
   claimerId = createTestUser(db, "arild.jacobsen@outlook.com");
   anotherUserId = createTestUser(db, "third@example.com");
+  const listId = createTestList(db, ownerId);
   const wish = createWish(db, ownerId, {
+    list_id: listId,
     name: "Nice bike",
     rating: "Would love to get this",
   });

@@ -40,14 +40,27 @@ export function createSchema(db: Db): void {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    -- A list groups related wishes for one user (e.g. "Birthday", "Kitchen").
+    -- Every wish must belong to a list — there is no concept of a "loose" wish.
+    CREATE TABLE IF NOT EXISTS lists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     -- links is a JSON-encoded array of URL strings, e.g. '["https://...","https://..."]'.
     -- SQLite does not have a native array type, so JSON in TEXT is the simplest option.
     -- The application layer parses it back to string[] — see parseWish() in wishes.ts.
     -- rating uses a CHECK constraint so the database rejects invalid values even if
     -- the application layer fails to validate.
+    -- list_id uses ON DELETE RESTRICT so a list cannot be deleted while it still has
+    -- wishes — the API layer converts that FK error to a 409 Conflict response.
     CREATE TABLE IF NOT EXISTS wishes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      list_id INTEGER NOT NULL REFERENCES lists(id) ON DELETE RESTRICT,
       name TEXT NOT NULL,
       description TEXT,
       links TEXT NOT NULL DEFAULT '[]',

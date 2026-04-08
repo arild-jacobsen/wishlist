@@ -7,6 +7,7 @@ Browser
   │
   ├── /login          → src/app/login/page.tsx          (Client Component)
   ├── /dashboard      → src/app/dashboard/page.tsx      (Server Component)
+  ├── /lists/new      → src/app/lists/new/page.tsx       (Client Component)
   ├── /wishes/new     → src/app/wishes/new/page.tsx      (Client Component)
   ├── /wishes/[id]    → src/app/wishes/[id]/page.tsx    (Server Component)
   └── /wishes/[id]/edit → src/app/wishes/[id]/edit/page.tsx (Server + Client)
@@ -15,6 +16,7 @@ Browser
               WishActions.tsx       (Client — claim toggle)
               SecretCommentForm.tsx (Client — comment form)
               EditWishForm.tsx      (Client — edit/delete form)
+              ListSelect.tsx        (Client — list picker dropdown)
               SignOutButton.tsx     (Client — sign-out)
   │
   ├── src/middleware.ts   ← Runs on every request; redirects to /login if not authenticated
@@ -22,6 +24,8 @@ Browser
   └── API Routes (src/app/api/)
         POST /api/auth/request-otp        ← Request an OTP code
         GET|POST /api/auth/[...nextauth]  ← NextAuth session endpoints
+        GET|POST /api/lists               ← List / create lists
+        GET|PATCH|DELETE /api/lists/[id]  ← Read / update / delete a list
         GET|POST /api/wishes              ← List / create wishes
         GET|PATCH|DELETE /api/wishes/[id] ← Read / update / delete a wish
         GET|POST|DELETE /api/wishes/[id]/claim    ← Claim management
@@ -32,6 +36,7 @@ Browser
               └── Business logic libraries in src/lib/
                     db.ts       ← Database connection and schema
                     auth.ts     ← OTP logic, whitelist, user lookup
+                    lists.ts    ← List CRUD
                     wishes.ts   ← Wish CRUD
                     claims.ts   ← Claim rules and queries
                     comments.ts ← Secret comment rules and queries
@@ -46,16 +51,18 @@ can access the database directly) and Client Components (run in the browser, mus
 use `fetch` to call API routes).
 
 **Server Components** (no `"use client"` directive):
-- `dashboard/page.tsx` — reads users and wishes directly from SQLite
+- `dashboard/page.tsx` — reads users, lists, and wishes directly from SQLite
 - `wishes/[id]/page.tsx` — reads wish, claims, comments directly
 - `wishes/[id]/edit/page.tsx` — reads wish to pre-populate form
 
 **Client Components** (`"use client"` at top):
 - `login/page.tsx` — manages multi-step form state
-- `wishes/new/page.tsx` — handles form submission via fetch
+- `lists/new/page.tsx` — handles list creation via fetch
+- `wishes/new/page.tsx` — fetches user's lists, handles wish creation via fetch
 - `components/WishActions.tsx` — toggles claims via fetch
 - `components/SecretCommentForm.tsx` — submits comments via fetch
-- `components/EditWishForm.tsx` — submits updates/deletes via fetch
+- `components/EditWishForm.tsx` — fetches user's lists, submits updates/deletes via fetch
+- `components/ListSelect.tsx` — reusable list picker, no direct fetch (receives lists as props)
 - `components/SignOutButton.tsx` — triggers NextAuth signOut
 
 The pattern is: **Server Components own the data-fetching; Client Components own
@@ -72,8 +79,8 @@ Using `/dashboard` as an example:
 3. Next.js renders `dashboard/page.tsx` on the server.
 4. The page calls `auth()` to get the current user's ID from the JWT.
 5. The page calls `getDb()` to get the SQLite connection (singleton).
-6. It queries all users, then their wishes, then calls `getClaimsForWish` for
-   each wish to determine the claim status from the viewer's perspective.
+6. It queries all users, then their lists and wishes, groups wishes by `list_id`,
+   and calls `getClaimsForWish` for each wish to determine claim status.
 7. The rendered HTML (with all data embedded) is sent to the browser.
 8. Client-side JavaScript is minimal — only hydrates the interactive components.
 

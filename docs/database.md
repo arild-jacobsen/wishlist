@@ -65,16 +65,34 @@ CREATE TABLE otp_tokens (
 Note: `email` is not a foreign key here because a token is created before the
 user row exists (the user row is only created on successful verification).
 
+### `lists`
+
+Groups related wishes for one user (e.g. "Birthday", "Kitchen"). Every wish
+must belong to exactly one list — there is no concept of a loose, unassigned
+wish.
+
+```sql
+CREATE TABLE lists (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name        TEXT NOT NULL,
+  description TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
 ### `wishes`
 
 Stores each wish. `links` is a JSON-encoded array of URL strings stored in a
 TEXT column. The `rating` column has a CHECK constraint enforcing the three
-allowed values.
+allowed values. `list_id` references `lists(id)` with `ON DELETE RESTRICT` —
+a list cannot be deleted while it still has wishes.
 
 ```sql
 CREATE TABLE wishes (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  list_id     INTEGER NOT NULL REFERENCES lists(id) ON DELETE RESTRICT,
   name        TEXT NOT NULL,
   description TEXT,                        -- Nullable; omitted if not provided
   links       TEXT NOT NULL DEFAULT '[]',  -- JSON array: '["https://..."]'
@@ -122,13 +140,13 @@ CREATE TABLE secret_comments (
 );
 ```
 
-## Cascade deletes
+## Cascade deletes and restrictions
 
-All child tables (`wishes`, `claims`, `secret_comments`) use `ON DELETE CASCADE`
-referencing `users.id` and `wishes.id`. This means:
-
-- Deleting a user removes all their wishes, claims, and comments automatically.
-- Deleting a wish removes all its claims and comments automatically.
+| Action | Effect |
+|---|---|
+| Delete a user | Cascades to delete their lists, wishes (via `user_id`), claims, and comments |
+| Delete a list | **Restricted** if any wishes still reference it (`ON DELETE RESTRICT`). The API returns `409 Conflict` in this case. Once empty, the list can be deleted freely. |
+| Delete a wish | Cascades to delete its claims and comments |
 
 ## Datetime storage
 

@@ -37,6 +37,76 @@ These are consumed by NextAuth's client library — do not call them directly.
 
 ---
 
+## Lists
+
+### `GET /api/lists`
+
+Returns all lists belonging to the current user, newest first.
+
+**Response:**
+```json
+[
+  { "id": 1, "user_id": 1, "name": "Kitchen", "description": "Cooking stuff", "created_at": "..." },
+  { "id": 2, "user_id": 1, "name": "Birthday", "description": null, "created_at": "..." }
+]
+```
+
+---
+
+### `POST /api/lists`
+
+Creates a new list owned by the current user.
+
+**Request body:**
+```json
+{ "name": "Kitchen", "description": "Optional description" }
+```
+
+`name` is required. `description` is optional.
+
+**Response:** `201 Created` with the created `List` object.
+
+**Error responses:**
+- `400 Bad Request` — empty name
+
+---
+
+### `GET /api/lists/[id]`
+
+Returns a single list by ID.
+
+**Response:** `List` object, or `404 Not Found`.
+
+---
+
+### `PATCH /api/lists/[id]`
+
+Partially updates a list. Only the list owner can do this.
+
+**Request body:** (all fields optional)
+```json
+{ "name": "Updated name", "description": "Updated description" }
+```
+
+**Response:** Updated `List` object.
+
+**Error responses:**
+- `400 Bad Request` — not the owner, or empty name
+
+---
+
+### `DELETE /api/lists/[id]`
+
+Deletes a list. Only the list owner can do this. The list must be empty (no wishes).
+
+**Response:** `204 No Content`.
+
+**Error responses:**
+- `400 Bad Request` — not the owner or list not found
+- `409 Conflict` — list still has wishes
+
+---
+
 ## Users
 
 ### `GET /api/users`
@@ -96,6 +166,7 @@ Creates a new wish owned by the current user.
 **Request body:**
 ```json
 {
+  "list_id": 1,
   "name": "Coffee machine",
   "description": "The one with the milk frother",
   "links": ["https://example.com/product"],
@@ -103,7 +174,7 @@ Creates a new wish owned by the current user.
 }
 ```
 
-`name` and `rating` are required. `description` and `links` are optional.
+`list_id`, `name`, and `rating` are required. `description` and `links` are optional.
 
 **Valid rating values:**
 - `"It'd be nice"`
@@ -133,6 +204,7 @@ All fields are optional — omit any field to keep its current value.
 **Request body:** (all fields optional)
 ```json
 {
+  "list_id": 2,
   "name": "Updated name",
   "description": "Updated description",
   "links": ["https://new-link.com"],
@@ -242,7 +314,7 @@ Idempotent: skips users that already exist.
 **Response:** `201 Created`
 ```json
 {
-  "created": [{ "email": "alice@example.com", "userId": 4, "wishesCreated": 3 }],
+  "created": [{ "email": "alice@example.com", "userId": 4, "listsCreated": 1, "wishesCreated": 3 }],
   "skipped": ["bob@example.com"]
 }
 ```
