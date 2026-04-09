@@ -1,14 +1,18 @@
 // Route protection middleware.
 //
-// Next.js middleware runs on the Edge (before the page renders) for every
-// request that matches the `config.matcher` below. Here we use it to redirect
-// unauthenticated users to /login.
+// Next.js middleware runs on the Edge Runtime (before the page renders) for
+// every request that matches the `config.matcher` below. The Edge Runtime does
+// NOT support Node.js-only modules like better-sqlite3, so this file imports
+// from auth.config.ts (Edge-safe) instead of auth.ts (which pulls in the DB).
 //
-// The `auth` wrapper from NextAuth adds `req.auth` to the request object.
-// req.auth is the decoded session (or null if there is no valid JWT cookie).
+// NextAuth(authConfig).auth gives us a middleware wrapper that reads the JWT
+// cookie and populates req.auth with the decoded session (or null).
 
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+import authConfig from "@/auth.config";
 import { NextResponse } from "next/server";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;

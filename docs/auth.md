@@ -78,9 +78,21 @@ To implement real email delivery, replace the body of `sendOTPEmail` with calls
 to a service like Resend, SendGrid, or Nodemailer. The function signature should
 stay the same.
 
-## NextAuth configuration (`src/auth.ts`)
+## NextAuth configuration (split files)
 
-The file exports four things used across the app:
+The auth config is split into two files to support the Edge Runtime:
+
+| File | Purpose |
+|---|---|
+| `src/auth.config.ts` | Edge-safe base config: session strategy, JWT/session callbacks, pages. No Node.js-only imports. |
+| `src/auth.ts` | Full config: spreads the base config and adds the Credentials `authorize()` callback, which needs `better-sqlite3`. |
+
+The middleware imports from `auth.config.ts`; everything else imports from
+`auth.ts`. This split is necessary because Next.js middleware runs in the Edge
+Runtime, which does not support Node.js modules like `fs` (required by
+`better-sqlite3`).
+
+`src/auth.ts` exports four things used across the app:
 
 | Export | Used in |
 |---|---|
@@ -90,6 +102,8 @@ The file exports four things used across the app:
 | `signOut()` | `src/components/SignOutButton.tsx` — signs user out |
 
 ### JWT and session callbacks
+
+Defined in `src/auth.config.ts` (shared by both middleware and full auth).
 
 NextAuth's `jwt` callback runs when a JWT is created or refreshed. It copies
 the user's `id` from the `authorize()` return value into the token:
@@ -122,9 +136,15 @@ strings in the JWT. When converting back to a database ID, always use
 
 ## Route protection (middleware)
 
-`src/middleware.ts` wraps the NextAuth `auth()` function to protect routes:
+`src/middleware.ts` creates its own NextAuth instance from the Edge-safe base
+config (`auth.config.ts`) and uses the `auth()` wrapper to protect routes:
 
 ```typescript
+import NextAuth from "next-auth";
+import authConfig from "@/auth.config";
+
+const { auth } = NextAuth(authConfig);
+
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isLoginPage = req.nextUrl.pathname.startsWith("/login");

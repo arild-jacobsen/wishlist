@@ -100,8 +100,13 @@ Using `/dashboard` as an example:
 
 See `docs/auth.md` for the detailed OTP flow. At a structural level:
 
-- `src/auth.ts` is the single NextAuth configuration file.
-- It exports `{ handlers, signIn, signOut, auth }`.
+- `src/auth.config.ts` is the Edge-safe base NextAuth config (session strategy,
+  callbacks, pages). It has no Node.js-only imports, so the middleware can use it.
+- `src/auth.ts` spreads the base config and adds the Credentials `authorize()`
+  callback (which needs `better-sqlite3`). It exports `{ handlers, signIn,
+  signOut, auth }`.
+- `src/middleware.ts` creates its own NextAuth instance from `auth.config.ts`
+  so it can run in the Edge Runtime without pulling in `better-sqlite3`.
 - `handlers` are used in `src/app/api/auth/[...nextauth]/route.ts`.
 - `auth()` is called in every server component and route handler that needs
   the current user.

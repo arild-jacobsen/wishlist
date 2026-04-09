@@ -1,33 +1,31 @@
-// NextAuth v5 configuration.
+// NextAuth v5 configuration — full version with database access.
 //
-// This file is the single source of truth for authentication. It exports four
-// things used in different parts of the app:
+// This file builds on the Edge-safe base config in src/auth.config.ts by adding
+// the Credentials authorize() callback, which needs better-sqlite3 (a Node.js
+// module). Because of that dependency, this file must NOT be imported from
+// middleware — use auth.config.ts there instead.
+//
+// Exports used in different parts of the app:
 //
 //   handlers  → mounted as GET/POST in src/app/api/auth/[...nextauth]/route.ts
-//               (NextAuth's own endpoints for session cookies, CSRF, sign-out)
-//
-//   auth()    → called in server components and route handlers to read the
-//               current user's session. Returns null if not logged in.
-//
-//   signIn()  → called from the browser (Client Components) to initiate login.
-//               Used in src/app/login/page.tsx.
-//
-//   signOut() → called from the browser to end the session.
-//               Used in src/components/SignOutButton.tsx.
+//   auth()    → called in server components and route handlers to read session
+//   signIn()  → called from Client Components to initiate login
+//   signOut() → called from Client Components to end the session
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { getDb } from "@/lib/db";
 import { verifyOTPToken, getOrCreateUser, isEmailAllowed } from "@/lib/auth";
+import authConfig from "@/auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
-    // "Credentials" is NextAuth's escape hatch for custom auth logic.
-    // Here we use it to verify an OTP code instead of a password.
+    // Override the base Credentials provider to add the authorize() callback,
+    // which requires database access (not available in Edge Runtime).
     Credentials({
       id: "otp",
       name: "OTP",
-      // These fields are passed from the signIn() call in login/page.tsx.
       credentials: {
         email: { label: "Email", type: "email" },
         token: { label: "OTP Code", type: "text" },
@@ -55,39 +53,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-
-  // Store session data in a signed JWT cookie (no session table needed).
-  session: { strategy: "jwt" },
-
-  // Override the default /auth/signin URL to our custom login page.
-  pages: {
-    signIn: "/login",
-  },
-
-  callbacks: {
-    // jwt() runs whenever a JWT is created (login) or verified (each request).
-    // We copy id and email from the user object (available only on login) into
-    // the persistent token so they survive across requests.
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-      }
-      return token;
-    },
-
-    // session() runs when auth() is called in server components or route handlers.
-    // It shapes the session object that the app receives. We copy id and email
-    // from the JWT token into session.user so pages can access them.
-    //
-    // Note: session.user.id is a STRING (NextAuth convention), not a number.
-    // Always convert with Number(session.user.id) before using as a database ID.
-    session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-      }
-      return session;
-    },
-  },
 });
