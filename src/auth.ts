@@ -1,8 +1,10 @@
 // NextAuth v5 configuration — full version with database access.
 //
-// This file builds on the Edge-safe base config in src/auth.config.ts by adding
-// the Credentials authorize() callback, which needs better-sqlite3 (a Node.js
-// module). Because of that dependency, this file must NOT be imported from
+// This file builds on the Edge-safe base config in src/auth.config.ts by adding:
+//   - The Google OAuth provider (whitelist enforced in the signIn callback)
+//   - The Credentials authorize() callback for OTP login (needs better-sqlite3)
+//
+// Because of the better-sqlite3 dependency, this file must NOT be imported from
 // middleware — use auth.config.ts there instead.
 //
 // Exports used in different parts of the app:
@@ -14,6 +16,7 @@
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { getDb } from "@/lib/db";
 import { verifyOTPToken, getOrCreateUser, isEmailAllowed } from "@/lib/auth";
 import authConfig from "@/auth.config";
@@ -21,6 +24,11 @@ import authConfig from "@/auth.config";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   providers: [
+    // Google OAuth — whitelist check and DB user creation happen in the
+    // signIn callback below. Credentials come from GOOGLE_CLIENT_ID and
+    // GOOGLE_CLIENT_SECRET environment variables.
+    Google,
+
     // Override the base Credentials provider to add the authorize() callback,
     // which requires database access (not available in Edge Runtime).
     Credentials({
@@ -53,4 +61,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+
+  callbacks: {
+    // Spread the jwt and session callbacks from authConfig so they still run.
+    ...authConfig.callbacks,
+
+    // signIn runs after OAuth completes but before the JWT is created.
+    // Not called for Credentials — those go through authorize() above.
+    async signIn({ user, account }) {
+      // Only apply extra checks to Google sign-ins.
+      if (account?.provider !== "google") return true;
+
+      // Enforce the whitelist — non-whitelisted Google accounts are rejected.
+      if (!user.email || !isEmailAllowed(user.email)) return false;
+
+      // Look up or create the user row, then overwrite user.id with our
+      // database integer ID (as a string). The jwt callback in auth.config.ts
+      // will pick this up and store it in the token, just like for OTP logins.
+      const db = getDb();
+      const dbUser = getOrCreateUser(db, user.email);
+      user.id = String(dbUser.id);
+
+      return true;
+    },
+  },
 });

@@ -15,13 +15,13 @@ To add someone new, see the developer docs (`docs/auth.md`).
 
 ## Logging in
 
-There are no passwords. Every time you log in:
+There are two ways to sign in:
 
-1. Go to the app and enter your email address.
-2. A 6-digit code will be sent to your email.
-3. Enter the code to sign in. Codes expire after 15 minutes.
+**Google (recommended):** Click "Sign in with Google" and complete the Google sign-in flow. No codes required.
 
-> **Note:** Email delivery is not yet wired up. During development, the code is
+**One-time code:** Enter your email address and you'll receive a 6-digit code. Enter the code to sign in. Codes expire after 15 minutes.
+
+> **Note:** Email delivery is not yet wired up. During development, the one-time code is
 > printed to the server's console log instead of being emailed.
 
 ---

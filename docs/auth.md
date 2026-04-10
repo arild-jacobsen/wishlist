@@ -2,11 +2,13 @@
 
 ## Strategy
 
-The app uses **OTP (One-Time Password)** based login — there are no passwords.
-Every login attempt generates a fresh 6-digit code that expires in 15 minutes.
+The app supports two login methods, both managed by NextAuth v5:
 
-Session state is stored in a **JWT cookie** managed by NextAuth v5. No session
-table is needed in the database.
+1. **Google SSO** — click "Sign in with Google", complete Google OAuth, land on dashboard.
+2. **OTP (One-Time Password)** — enter email, receive a 6-digit code, enter code.
+
+In both cases the email whitelist is enforced before a session is granted. Session
+state is stored in a **JWT cookie** — no session table is needed in the database.
 
 ## Email whitelist
 
@@ -22,6 +24,34 @@ export const ALLOWED_EMAILS = [
 
 `isEmailAllowed(email)` performs a case-insensitive check against this list.
 To add more users, add their email to this array and redeploy.
+
+## Google SSO flow (step by step)
+
+```
+1. User clicks "Sign in with Google" on /login
+        │
+        ▼
+2. signIn("google", { callbackUrl: "/dashboard" }) — NextAuth redirects to Google
+        │
+        ▼
+3. User completes Google OAuth consent
+        │
+        ▼
+4. Google redirects back to /api/auth/callback/google
+        │
+        ▼
+5. signIn callback in src/auth.ts:
+   - Checks isEmailAllowed(user.email) → returns false (rejected) if not on list
+   - Calls getOrCreateUser(db, email) to create the user row if needed
+   - Overwrites user.id with our database integer ID (as a string)
+        │
+        ▼
+6. jwt callback in src/auth.config.ts:
+   - Copies user.id and user.email into the token (same as OTP flow)
+        │
+        ▼
+7. Browser is redirected to /dashboard with a JWT cookie
+```
 
 ## OTP login flow (step by step)
 
@@ -78,6 +108,20 @@ To implement real email delivery, replace the body of `sendOTPEmail` with calls
 to a service like Resend, SendGrid, or Nodemailer. The function signature should
 stay the same.
 
+## Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `AUTH_SECRET` | Yes | Random string used to sign JWT cookies. Generate with `openssl rand -base64 32`. |
+| `GOOGLE_CLIENT_ID` | Yes (for Google SSO) | OAuth client ID from Google Cloud Console. |
+| `GOOGLE_CLIENT_SECRET` | Yes (for Google SSO) | OAuth client secret from Google Cloud Console. |
+
+To set up Google OAuth credentials:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+2. Create an OAuth 2.0 Client ID (type: Web application)
+3. Add `http://localhost:3000/api/auth/callback/google` as an authorised redirect URI (for local dev)
+4. Copy the client ID and secret into `.env.local`
+
 ## NextAuth configuration (split files)
 
 The auth config is split into two files to support the Edge Runtime:
@@ -98,7 +142,7 @@ Runtime, which does not support Node.js modules like `fs` (required by
 |---|---|
 | `handlers` | `src/app/api/auth/[...nextauth]/route.ts` — mounts NextAuth endpoints |
 | `auth()` | Server components and route handlers — reads current session |
-| `signIn()` | `src/app/login/page.tsx` — signs user in from the browser |
+| `signIn()` | `src/app/login/page.tsx` — initiates Google SSO or OTP sign-in |
 | `signOut()` | `src/components/SignOutButton.tsx` — signs user out |
 
 ### JWT and session callbacks
