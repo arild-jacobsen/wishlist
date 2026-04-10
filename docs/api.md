@@ -296,6 +296,22 @@ returns `403 Forbidden`.
 
 ---
 
+### `POST /api/wishes/[id]/comments`
+
+Adds a secret comment to a wish. The wish owner cannot post comments.
+
+**Request body:**
+```json
+{ "content": "Should we go halves on this?" }
+```
+
+`content` must be a non-empty string.
+
+**Response:** `201 Created` with the new `SecretComment` object.
+
+**Error responses:**
+- `400 Bad Request` — user is the wish owner, or empty content
+
 ---
 
 ## Dev utilities
@@ -306,8 +322,8 @@ These endpoints are only available when `NODE_ENV !== 'production'`. They return
 ### `POST /api/dev/seed`
 
 Creates a fixed set of dummy users (`alice@example.com`, `bob@example.com`,
-`carol@example.com`) each with three wishes spanning all three rating levels.
-Idempotent: skips users that already exist.
+`carol@example.com`). Each user gets one named list with three wishes spanning
+all three rating levels. Idempotent: skips users that already exist.
 
 **Does not require authentication.**
 
@@ -332,21 +348,3 @@ claims, and secret comments (cascade).
 ```json
 { "deletedUsers": 3 }
 ```
-
----
-
-### `POST /api/wishes/[id]/comments`
-
-Adds a secret comment to a wish. The wish owner cannot post comments.
-
-**Request body:**
-```json
-{ "content": "Should we go halves on this?" }
-```
-
-`content` must be a non-empty string.
-
-**Response:** `201 Created` with the new `SecretComment` object.
-
-**Error responses:**
-- `400 Bad Request` — user is the wish owner, or empty content

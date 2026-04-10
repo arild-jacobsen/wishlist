@@ -47,6 +47,17 @@ without going through the full auth flow:
 const userId = createTestUser(db, "jacobsen.arild@gmail.com");
 ```
 
+**`createTestList(db, userId, name?)`**
+Inserts a list owned by `userId` and returns its integer ID. Required before
+creating wishes in tests, since every wish must belong to a list. `name`
+defaults to `"Test List"` if omitted:
+
+```typescript
+const listId = createTestList(db, userId);
+// or with a custom name:
+const listId = createTestList(db, userId, "Birthday");
+```
+
 ## Test files
 
 ### `src/lib/__tests__/auth.test.ts`
@@ -61,6 +72,18 @@ Tests the authentication functions in `src/lib/auth.ts`.
 | `verifyOTPToken` | Valid token, marks used, rejects used/wrong/expired tokens |
 | `sendOTPEmail` | Mock returns the token (smoke test) |
 | `getOrCreateUser` | Creates on first call, returns same row on second call |
+
+### `src/lib/__tests__/lists.test.ts`
+
+Tests `src/lib/lists.ts`.
+
+| Test group | What it covers |
+|---|---|
+| `createList` | Required fields, optional description, whitespace trimming, empty/blank name throws |
+| `getListsByUser` | Returns own lists only, handles empty list |
+| `getListById` | Returns list, undefined for unknown ID |
+| `updateList` | Updates name and description independently, non-owner throws, empty name throws |
+| `deleteList` | Owner can delete empty list, non-owner throws, throws when list still has wishes (FK RESTRICT) |
 
 ### `src/lib/__tests__/wishes.test.ts`
 
