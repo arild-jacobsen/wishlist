@@ -70,7 +70,7 @@ export function EditWishForm({ wish }: { wish: Wish }) {
   const inputClass = "w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-8 shadow-sm dark:bg-gray-800">
+    <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800 sm:p-8">
       <div className="flex items-center gap-4">
         <Link href={`/wishes/${wish.id}`} className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
           ← Back

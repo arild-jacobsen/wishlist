@@ -46,7 +46,7 @@ export default function NewListPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white shadow-sm dark:bg-gray-800 dark:shadow-gray-900">
-        <div className="mx-auto flex max-w-2xl items-center gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-2xl items-center gap-4 px-4 py-3 sm:px-6 sm:py-4">
           <Link href="/dashboard" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
             ← Back
           </Link>
@@ -54,8 +54,8 @@ export default function NewListPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-8">
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-8 shadow-sm dark:bg-gray-800">
+      <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800 sm:p-8">
           {error && (
             <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">{error}</p>
           )}

@@ -71,8 +71,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md dark:bg-gray-800">
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-gray-900">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-md dark:bg-gray-800 sm:p-8">
         <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Wishlist</h1>
         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           {step === "email"

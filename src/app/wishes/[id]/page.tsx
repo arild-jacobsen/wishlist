@@ -89,17 +89,17 @@ export default async function WishPage({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white shadow-sm dark:bg-gray-800 dark:shadow-gray-900">
-        <div className="mx-auto flex max-w-2xl items-center gap-4 px-6 py-4">
-          <Link href="/dashboard" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+        <div className="mx-auto flex max-w-2xl items-center gap-4 px-4 py-3 sm:px-6 sm:py-4">
+          <Link href="/dashboard" className="shrink-0 text-sm text-indigo-600 hover:underline dark:text-indigo-400">
             ← Back
           </Link>
-          <h1 className="text-xl font-bold text-gray-900 truncate dark:text-white">{wish.name}</h1>
+          <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-gray-900 dark:text-white">{wish.name}</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-8 space-y-6">
+      <main className="mx-auto max-w-2xl px-4 py-6 space-y-6 sm:px-6 sm:py-8">
         {/* Wish card — visible to everyone */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm space-y-4 dark:bg-gray-800">
+        <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4 dark:bg-gray-800 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs text-gray-400 dark:text-gray-500">

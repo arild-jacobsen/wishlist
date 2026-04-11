@@ -62,29 +62,39 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white shadow-sm dark:bg-gray-800 dark:shadow-gray-900">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Wishlist</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{currentUser?.email}</span>
-            <Link
-              href="/lists/new"
-              className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
-            >
-              + New list
-            </Link>
-            <Link
-              href="/wishes/new"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              + Add wish
-            </Link>
-            {/* SignOutButton is a Client Component because it needs an onClick handler */}
+        {/*
+          On mobile the header collapses to: title | "+ Add" | Sign out, with a gap
+          on the right so the fixed ThemeToggle (top-4 right-4) doesn't overlap text.
+          On sm+ the full set of controls is shown in a single row.
+        */}
+        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">
+          <h1 className="flex-1 text-xl font-bold text-gray-900 dark:text-white">Wishlist</h1>
+          {/* Email — hidden on mobile to save space */}
+          <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400">{currentUser?.email}</span>
+          {/* New list — hidden on mobile; accessible from the new-wish form instead */}
+          <Link
+            href="/lists/new"
+            className="hidden sm:block rounded-lg border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+          >
+            + New list
+          </Link>
+          <Link
+            href="/wishes/new"
+            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:px-4"
+          >
+            {/* Shorter label on mobile */}
+            <span className="sm:hidden">+ Add</span>
+            <span className="hidden sm:inline">+ Add wish</span>
+          </Link>
+          {/* SignOutButton is a Client Component because it needs an onClick handler */}
+          {/* pr-10 reserves space for the fixed ThemeToggle on mobile */}
+          <span className="pr-10 sm:pr-0">
             <SignOutButton />
-          </div>
+          </span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-8 space-y-10">
+      <main className="mx-auto max-w-4xl px-4 py-6 space-y-8 sm:px-6 sm:py-8 sm:space-y-10">
         {usersWithLists.map((user) => (
           <section key={user.id}>
             <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -132,9 +142,9 @@ function ListSection({ list, wishes }: { list: List; wishes: WishWithClaims[] })
                 href={`/wishes/${wish.id}`}
                 className="block rounded-xl border border-gray-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-700"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{wish.name}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate dark:text-white">{wish.name}</p>
                     {wish.description && (
                       <p className="mt-1 text-sm text-gray-500 line-clamp-2 dark:text-gray-400">
                         {wish.description}
