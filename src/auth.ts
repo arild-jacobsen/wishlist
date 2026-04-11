@@ -26,9 +26,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     // Google OAuth — whitelist check and DB user creation happen in the
     // signIn callback below. Credentials come from GOOGLE_CLIENT_ID and
-    // GOOGLE_CLIENT_SECRET environment variables.
-    // Passed explicitly because NextAuth v5's auto-detection looks for
-    // AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET, not GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.
+    // GOOGLE_CLIENT_SECRET environment variables, passed explicitly because
+    // NextAuth v5's auto-detection looks for AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET.
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
