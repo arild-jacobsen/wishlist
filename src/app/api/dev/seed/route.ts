@@ -1,12 +1,13 @@
-// Dev-only endpoint for seeding dummy users with lists and wishes.
+// Dev-only endpoint for seeding dummy users with lists, wishes, claims, and comments.
 //
 // Only available when NODE_ENV !== 'production'. Calling it in production
 // returns 404 immediately so there is no risk of accidental data insertion.
 //
 // POST /api/dev/seed
 //   Creates a fixed set of dummy users (idempotent: skips users that already
-//   exist based on email). Each user gets one or more named lists, and each
-//   list is pre-populated with wishes across the three rating levels.
+//   exist based on email). Each user gets multiple named lists pre-populated
+//   with wishes. After all users exist, cross-user claims and secret comments
+//   are inserted (INSERT OR IGNORE, so re-seeding won't duplicate them).
 //
 // DELETE /api/dev/seed
 //   Removes all dummy users (identified by the @example.com domain) and their
@@ -59,6 +60,20 @@ const DUMMY_USERS: SeedUser[] = [
           },
         ],
       },
+      {
+        name: "Books",
+        description: "Reading list wishlist",
+        wishes: [
+          {
+            name: "The Pragmatic Programmer",
+            description: "20th anniversary edition",
+            links: ["https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/"],
+            rating: "Would love to get this",
+          },
+          { name: "Atomic Habits", rating: "Would make me happy" },
+          { name: "Shoe Dog", description: "Phil Knight's memoir", rating: "It'd be nice" },
+        ],
+      },
     ],
   },
   {
@@ -75,6 +90,23 @@ const DUMMY_USERS: SeedUser[] = [
           },
           { name: "USB-C hub", description: "At least 4 ports, power delivery", rating: "Would make me happy" },
           { name: "Cable organiser", rating: "It'd be nice" },
+        ],
+      },
+      {
+        name: "Cycling",
+        description: "For the weekend rides",
+        wishes: [
+          {
+            name: "Road bike helmet",
+            description: "Something well-ventilated, MIPS preferred",
+            rating: "Would love to get this",
+          },
+          {
+            name: "Cycling gloves",
+            description: "Padded, size L",
+            rating: "Would make me happy",
+          },
+          { name: "Water bottle cage", rating: "It'd be nice" },
         ],
       },
     ],
@@ -94,8 +126,57 @@ const DUMMY_USERS: SeedUser[] = [
           { name: "Running socks (3-pack)", rating: "It'd be nice" },
         ],
       },
+      {
+        name: "Travel",
+        description: "Making trips easier",
+        wishes: [
+          {
+            name: "Kindle Paperwhite",
+            description: "With cover, ideally the 16GB model",
+            links: ["https://www.amazon.com/kindle-paperwhite"],
+            rating: "Would love to get this",
+          },
+          {
+            name: "Packing cubes",
+            description: "A full set in a neutral colour",
+            rating: "Would make me happy",
+          },
+          { name: "Universal travel adapter", rating: "It'd be nice" },
+        ],
+      },
     ],
   },
+];
+
+// Cross-user claims: [claimerEmail, ownerEmail, wishName]
+// These are inserted with INSERT OR IGNORE so re-seeding won't duplicate them.
+const SEED_CLAIMS: [string, string, string][] = [
+  ["bob@example.com", "alice@example.com", "Stand mixer"],
+  ["carol@example.com", "alice@example.com", "Stand mixer"],
+  ["bob@example.com", "alice@example.com", "Cookbook: Salt Fat Acid Heat"],
+  ["alice@example.com", "bob@example.com", "Mechanical keyboard"],
+  ["carol@example.com", "bob@example.com", "USB-C hub"],
+  ["alice@example.com", "carol@example.com", "Trail running shoes"],
+  ["bob@example.com", "carol@example.com", "Kindle Paperwhite"],
+];
+
+// Cross-user secret comments: [commenterEmail, ownerEmail, wishName, content]
+// Ordered so they read as a realistic conversation thread.
+const SEED_COMMENTS: [string, string, string, string][] = [
+  ["bob@example.com", "alice@example.com", "Stand mixer",
+    "I found a great deal on the 5-litre model — planning to order this week!"],
+  ["carol@example.com", "alice@example.com", "Stand mixer",
+    "Oh I was thinking the same thing. Should we split it?"],
+  ["bob@example.com", "alice@example.com", "Stand mixer",
+    "Great idea. Carol, you take the lead and I'll chip in half?"],
+  ["alice@example.com", "bob@example.com", "Mechanical keyboard",
+    "Saw this on sale last week — already ordered it 🎉"],
+  ["carol@example.com", "bob@example.com", "USB-C hub",
+    "Getting the Anker 7-in-1 — should tick all the boxes"],
+  ["alice@example.com", "carol@example.com", "Trail running shoes",
+    "Size EU 39, right? Just double-checking before I order"],
+  ["bob@example.com", "carol@example.com", "Kindle Paperwhite",
+    "Grabbing the 16GB with the fabric cover — hope that's OK!"],
 ];
 
 // Guards every handler. Returns a 404 response in production so the route
@@ -115,6 +196,8 @@ export async function POST() {
 
   const created: { email: string; userId: number; listsCreated: number; wishesCreated: number }[] = [];
   const skipped: string[] = [];
+
+  // ── 1. Create users, lists, and wishes ───────────────────────────────────
 
   for (const dummy of DUMMY_USERS) {
     // Check whether the user already exists to keep this idempotent.
@@ -156,7 +239,62 @@ export async function POST() {
     });
   }
 
-  return NextResponse.json({ created, skipped }, { status: 201 });
+  // ── 2. Wire up cross-user claims and comments ────────────────────────────
+  //
+  // These helpers look up IDs from the DB so they work regardless of whether
+  // the users above were freshly created or already existed (skipped).
+
+  const getUserId = (email: string): number | undefined =>
+    (db.prepare("SELECT id FROM users WHERE email = ?").get(email) as { id: number } | undefined)?.id;
+
+  // Look up a wish by the owner's email and the wish's name. Joins through
+  // lists because wishes don't store user_id directly — they belong to a list.
+  const getWishId = (ownerEmail: string, wishName: string): number | undefined => {
+    const ownerId = getUserId(ownerEmail);
+    if (!ownerId) return undefined;
+    return (
+      db
+        .prepare(
+          `SELECT w.id FROM wishes w
+           JOIN lists l ON w.list_id = l.id
+           WHERE l.user_id = ? AND w.name = ?`
+        )
+        .get(ownerId, wishName) as { id: number } | undefined
+    )?.id;
+  };
+
+  let claimsCreated = 0;
+  for (const [claimerEmail, ownerEmail, wishName] of SEED_CLAIMS) {
+    const claimerId = getUserId(claimerEmail);
+    const wishId = getWishId(ownerEmail, wishName);
+    if (!claimerId || !wishId) continue;
+    // INSERT OR IGNORE respects the UNIQUE(wish_id, user_id) constraint
+    // without throwing — safe to run on an already-seeded database.
+    const { changes } = db
+      .prepare("INSERT OR IGNORE INTO claims (wish_id, user_id) VALUES (?, ?)")
+      .run(wishId, claimerId);
+    claimsCreated += changes;
+  }
+
+  let commentsCreated = 0;
+  for (const [commenterEmail, ownerEmail, wishName, content] of SEED_COMMENTS) {
+    const commenterId = getUserId(commenterEmail);
+    const wishId = getWishId(ownerEmail, wishName);
+    if (!commenterId || !wishId) continue;
+    // Only insert if this exact comment doesn't already exist (idempotent).
+    const exists = db
+      .prepare(
+        "SELECT id FROM secret_comments WHERE wish_id = ? AND user_id = ? AND content = ?"
+      )
+      .get(wishId, commenterId, content);
+    if (exists) continue;
+    db.prepare(
+      "INSERT INTO secret_comments (wish_id, user_id, content) VALUES (?, ?, ?)"
+    ).run(wishId, commenterId, content);
+    commentsCreated++;
+  }
+
+  return NextResponse.json({ created, skipped, claimsCreated, commentsCreated }, { status: 201 });
 }
 
 export async function DELETE() {

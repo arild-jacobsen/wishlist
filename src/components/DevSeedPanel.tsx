@@ -30,6 +30,8 @@ export function DevSeedPanel() {
         const parts = [];
         if (c.length) parts.push(`Created: ${c.join(", ")}`);
         if (s.length) parts.push(`Skipped: ${s.join(", ")}`);
+        if (json.claimsCreated) parts.push(`${json.claimsCreated} claims`);
+        if (json.commentsCreated) parts.push(`${json.commentsCreated} comments`);
         setMessage(parts.join(" · ") || "Nothing to create");
       } else {
         setMessage(`Deleted ${json.deletedUsers} user(s)`);
