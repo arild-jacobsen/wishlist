@@ -39,7 +39,7 @@ export function SecretCommentForm({ wishId }: { wishId: number }) {
         onChange={(e) => setContent(e.target.value)}
         placeholder="Leave a secret comment…"
         required
-        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
       />
       <button
         type="submit"
@@ -48,7 +48,7 @@ export function SecretCommentForm({ wishId }: { wishId: number }) {
       >
         {pending ? "…" : "Send"}
       </button>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </form>
   );
 }

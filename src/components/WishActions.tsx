@@ -40,14 +40,14 @@ export function WishActions({
   return (
     <div>
       {error && (
-        <p className="mb-2 text-sm text-red-600">{error}</p>
+        <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
       <button
         onClick={toggleClaim}
         disabled={pending}
         className={`rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 ${
           isClaimed
-            ? "border border-gray-300 text-gray-700 hover:bg-gray-50"
+            ? "border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >

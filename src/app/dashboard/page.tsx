@@ -60,15 +60,15 @@ export default async function DashboardPage() {
   const currentUser = users.find((u) => u.id === viewerId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white shadow-sm dark:bg-gray-800 dark:shadow-gray-900">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-bold text-gray-900">Wishlist</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Wishlist</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">{currentUser?.email}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{currentUser?.email}</span>
             <Link
               href="/lists/new"
-              className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+              className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
             >
               + New list
             </Link>
@@ -87,12 +87,12 @@ export default async function DashboardPage() {
       <main className="mx-auto max-w-4xl px-6 py-8 space-y-10">
         {usersWithLists.map((user) => (
           <section key={user.id}>
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+            <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-100">
               {user.id === viewerId ? "My wish lists" : `${user.email}'s wish lists`}
             </h2>
 
             {user.lists.length === 0 ? (
-              <p className="text-sm text-gray-400">No lists yet.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">No lists yet.</p>
             ) : (
               <div className="space-y-6">
                 {user.lists.map((list) => (
@@ -116,27 +116,27 @@ function ListSection({ list, wishes }: { list: List; wishes: WishWithClaims[] })
   return (
     <div>
       <div className="mb-2">
-        <h3 className="font-medium text-gray-700">{list.name}</h3>
+        <h3 className="font-medium text-gray-700 dark:text-gray-300">{list.name}</h3>
         {list.description && (
-          <p className="text-xs text-gray-400">{list.description}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{list.description}</p>
         )}
       </div>
 
       {wishes.length === 0 ? (
-        <p className="text-sm text-gray-400 pl-0.5">No wishes in this list yet.</p>
+        <p className="text-sm text-gray-400 pl-0.5 dark:text-gray-500">No wishes in this list yet.</p>
       ) : (
         <ul className="space-y-3">
           {wishes.map((wish) => (
             <li key={wish.id}>
               <Link
                 href={`/wishes/${wish.id}`}
-                className="block rounded-xl border border-gray-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition"
+                className="block rounded-xl border border-gray-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-700"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-medium text-gray-900">{wish.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{wish.name}</p>
                     {wish.description && (
-                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                      <p className="mt-1 text-sm text-gray-500 line-clamp-2 dark:text-gray-400">
                         {wish.description}
                       </p>
                     )}
@@ -149,7 +149,7 @@ function ListSection({ list, wishes }: { list: List; wishes: WishWithClaims[] })
                       automatically hidden for the owner's own wishes.
                     */}
                     {wish.claims !== null && wish.claims.length > 0 && (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
                         Claimed
                       </span>
                     )}
@@ -168,13 +168,13 @@ function ListSection({ list, wishes }: { list: List; wishes: WishWithClaims[] })
 // Colours are consistent throughout the app: gray / yellow / rose.
 function RatingBadge({ rating }: { rating: string }) {
   const styles: Record<string, string> = {
-    "It'd be nice": "bg-gray-100 text-gray-600",
-    "Would make me happy": "bg-yellow-100 text-yellow-700",
-    "Would love to get this": "bg-rose-100 text-rose-700",
+    "It'd be nice": "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+    "Would make me happy": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+    "Would love to get this": "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
   };
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[rating] ?? "bg-gray-100 text-gray-600"}`}
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[rating] ?? "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"}`}
     >
       {rating}
     </span>

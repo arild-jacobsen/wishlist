@@ -19,14 +19,14 @@ interface Props {
 export function ListSelect({ lists, value, onChange }: Props) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">
+      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
         List <span className="text-red-500">*</span>
       </label>
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         required
-        className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
       >
         <option value="" disabled>
           Select a list…
@@ -39,7 +39,7 @@ export function ListSelect({ lists, value, onChange }: Props) {
       </select>
       <Link
         href="/lists/new"
-        className="mt-1 inline-block text-xs text-indigo-600 hover:underline"
+        className="mt-1 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
       >
         + Create new list
       </Link>

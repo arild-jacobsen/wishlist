@@ -71,17 +71,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">Wishlist</h1>
-        <p className="mb-6 text-sm text-gray-500">
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md dark:bg-gray-800">
+        <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Wishlist</h1>
+        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           {step === "email"
             ? "Sign in to access your wish lists."
             : `We sent a code to ${email}. Enter it below.`}
         </p>
 
         {error && (
-          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </p>
         )}
@@ -91,7 +91,7 @@ export default function LoginPage() {
             {/* Google SSO — simplest path for whitelisted Google accounts */}
             <button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -117,10 +117,10 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-3 text-xs text-gray-400">or use a one-time code</span>
+                <span className="bg-white px-3 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-500">or use a one-time code</span>
               </div>
             </div>
 
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               />
               <button
                 type="submit"
@@ -154,7 +154,7 @@ export default function LoginPage() {
               pattern="\d{6}"
               required
               autoFocus
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-center text-2xl font-mono tracking-widest focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-center text-2xl font-mono tracking-widest focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
             />
             <button
               type="submit"
@@ -166,7 +166,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setStep("email"); setOtp(""); setError(""); }}
-              className="w-full text-sm text-indigo-600 hover:underline"
+              className="w-full text-sm text-indigo-600 hover:underline dark:text-indigo-400"
             >
               Use a different email
             </button>

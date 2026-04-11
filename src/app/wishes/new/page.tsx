@@ -65,24 +65,27 @@ export default function NewWishPage() {
     }
   }
 
+  // Shared input classes to avoid repetition across form fields
+  const inputClass = "w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400";
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white shadow-sm dark:bg-gray-800 dark:shadow-gray-900">
         <div className="mx-auto flex max-w-2xl items-center gap-4 px-6 py-4">
-          <Link href="/dashboard" className="text-sm text-indigo-600 hover:underline">
+          <Link href="/dashboard" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
             ← Back
           </Link>
-          <h1 className="text-xl font-bold text-gray-900">New wish</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">New wish</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-8">
         {listsLoading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Loading…</p>
         ) : lists.length === 0 ? (
           // A wish must belong to a list — prompt the user to create one first.
-          <div className="rounded-2xl bg-white p-8 shadow-sm text-center space-y-3">
-            <p className="text-gray-600">You need a list before you can add wishes.</p>
+          <div className="rounded-2xl bg-white p-8 shadow-sm text-center space-y-3 dark:bg-gray-800">
+            <p className="text-gray-600 dark:text-gray-300">You need a list before you can add wishes.</p>
             <Link
               href="/lists/new"
               className="inline-block rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
@@ -91,15 +94,15 @@ export default function NewWishPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-8 shadow-sm dark:bg-gray-800">
             {error && (
-              <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
+              <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">{error}</p>
             )}
 
             <ListSelect lists={lists} value={listId} onChange={setListId} />
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -108,36 +111,36 @@ export default function NewWishPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 placeholder="e.g. New bicycle"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="Optional details…"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Links <span className="text-gray-400 font-normal">(one per line)</span>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Links <span className="text-gray-400 font-normal dark:text-gray-500">(one per line)</span>
               </label>
               <textarea
                 value={linksText}
                 onChange={(e) => setLinksText(e.target.value)}
                 rows={3}
                 placeholder="https://example.com/product"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 font-mono text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className={`${inputClass} font-mono`}
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 How much do you want this? <span className="text-red-500">*</span>
               </label>
               <div className="space-y-2">
@@ -151,7 +154,7 @@ export default function NewWishPage() {
                       onChange={() => setRating(r)}
                       className="accent-indigo-600"
                     />
-                    <span className="text-sm text-gray-700">{r}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{r}</span>
                   </label>
                 ))}
               </div>
