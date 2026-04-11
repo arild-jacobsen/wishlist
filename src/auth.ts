@@ -25,13 +25,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   providers: [
     // Google OAuth — whitelist check and DB user creation happen in the
-    // signIn callback below. Credentials come from GOOGLE_CLIENT_ID and
-    // GOOGLE_CLIENT_SECRET environment variables, passed explicitly because
-    // NextAuth v5's auto-detection looks for AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET.
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+    // signIn callback below. Credentials are read automatically from
+    // GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.
+    Google,
 
     // Override the base Credentials provider to add the authorize() callback,
     // which requires database access (not available in Edge Runtime).
