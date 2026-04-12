@@ -11,19 +11,14 @@
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
 import { NextResponse } from "next/server";
+import { isPublicPath } from "@/lib/is-public-path";
 
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
 
-  // These paths must be accessible without a session:
-  //   /login          → the login page itself
-  //   /api/auth/*     → NextAuth's own endpoints (session, CSRF, sign-out)
-  const isLoginPage = req.nextUrl.pathname.startsWith("/login");
-  const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth");
-
-  if (!isLoggedIn && !isLoginPage && !isApiAuth) {
+  if (!isLoggedIn && !isPublicPath(req.nextUrl.pathname)) {
     // Redirect to /login, preserving the original URL so we could redirect back
     // after login if needed (not currently implemented).
     return NextResponse.redirect(new URL("/login", req.url));
