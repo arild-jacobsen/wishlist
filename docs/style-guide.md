@@ -316,8 +316,58 @@ Tests should assert what a function *does* (return values, thrown errors,
 observable state changes), not *how* it does it. Do not assert SQL queries or
 internal implementation details.
 
+### Stubbing browser globals jsdom doesn't implement
+
+jsdom (the test environment) doesn't implement `window.matchMedia`,
+`window.confirm`, `window.alert`, and a handful of other browser APIs. If a
+component uses one of these, the test will throw `TypeError: not a function`.
+
+Use `vi.stubGlobal` to replace the missing global for the duration of a test
+file, and **always** call `vi.unstubAllGlobals()` in `afterEach` to prevent the
+stub leaking into other test files:
+
+```typescript
+// Set up before each test that needs it
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query === "(prefers-color-scheme: dark)" ? prefersDark : false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
+});
+
+// REQUIRED — cleans up stubs so they don't affect other files
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+```
+
+Use `vi.stubGlobal` for globals that **don't exist** in jsdom at all.
+Use `vi.spyOn(global, "fetch")` for globals that **do exist** but you want to
+control the return value per test — and pair it with `vi.restoreAllMocks()` in
+`beforeEach` so each test starts clean:
+
+```typescript
+beforeEach(() => {
+  vi.restoreAllMocks(); // resets spies from the previous test
+});
+
+it("does something", async () => {
+  vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    new Response(JSON.stringify({ id: 1 }), { status: 201 })
+  );
+  // ...
+});
+```
+
 ### Test file location
 
-Test files live at `src/lib/__tests__/<module>.test.ts`, mirroring the module
-they test. The double underscore `__tests__` convention makes it easy to exclude
-test files from production builds.
+Test files live alongside the code they test inside `__tests__/` folders:
+
+- `src/lib/__tests__/<module>.test.ts` — lib function tests
+- `src/app/api/__tests__/<route>.test.ts` — API route tests
+- `src/components/__tests__/<Component>.test.tsx` — component tests
+
+The double underscore `__tests__` convention makes it easy to exclude test files
+from production builds.
