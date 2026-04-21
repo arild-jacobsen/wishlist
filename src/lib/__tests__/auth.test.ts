@@ -106,8 +106,8 @@ describe("verifyOTPToken", () => {
 });
 
 describe("sendOTPEmail", () => {
-  it("returns the token (mock implementation)", () => {
-    const result = sendOTPEmail("jacobsen.arild@gmail.com", "123456");
+  it("returns the token (dev fallback, no RESEND_API_KEY set)", async () => {
+    const result = await sendOTPEmail("jacobsen.arild@gmail.com", "123456");
     expect(result).toBe("123456");
   });
 });

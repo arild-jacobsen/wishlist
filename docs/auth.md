@@ -65,7 +65,8 @@ To add more users, add their email to this array and redeploy.
    - For whitelisted emails:
        a. Generates a 6-digit code via generateOTP()
        b. Stores the code in otp_tokens with a 15-minute expiry
-       c. Calls sendOTPEmail() — currently logs code to the server console
+       c. Awaits sendOTPEmail() — delivers via Resend in production,
+          logs code to the server console in development
         │
         ▼
 3. User sees the "enter your code" step in the UI
@@ -95,26 +96,33 @@ To add more users, add their email to this array and redeploy.
 8. Browser is redirected to /dashboard
 ```
 
-## Mock email sending
+## Email delivery
 
-`sendOTPEmail()` in `src/lib/auth.ts` is a stub. It logs the code to the server
-console and returns the token. When running in development:
+`sendOTPEmail()` in `src/lib/auth.ts` is an async function with two modes:
+
+**Development** (no `RESEND_API_KEY`): logs the code to the server console so
+you can copy it during local development:
 
 ```
 [OTP] Sending code 483921 to jacobsen.arild@gmail.com
 ```
 
-To implement real email delivery, replace the body of `sendOTPEmail` with calls
-to a service like Resend, SendGrid, or Nodemailer. The function signature should
-stay the same.
+**Production** (`RESEND_API_KEY` set): delivers the code via
+[Resend](https://resend.com). The `from` address uses the `RESEND_DOMAIN`
+env var (`noreply@<RESEND_DOMAIN>`). The domain must be verified in your
+Resend account before emails will be delivered.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `AUTH_SECRET` | Yes | Random string used to sign JWT cookies. Generate with `openssl rand -base64 32`. |
+| `AUTH_TRUST_HOST` | Yes (production) | Set to `true` when running behind a reverse proxy (e.g. Railway). Tells NextAuth to trust the forwarded host header. |
 | `GOOGLE_CLIENT_ID` | Yes (for Google SSO) | OAuth client ID from Google Cloud Console. |
 | `GOOGLE_CLIENT_SECRET` | Yes (for Google SSO) | OAuth client secret from Google Cloud Console. |
+| `RESEND_API_KEY` | Yes (for OTP email) | API key from resend.com. Without this, OTP codes are only logged to the server console. |
+| `RESEND_DOMAIN` | Yes (for OTP email) | Verified sending domain, e.g. `mail.yourdomain.com`. Used as the `from` address: `noreply@<RESEND_DOMAIN>`. |
+| `DATABASE_URL` | No | Path to the SQLite file. Defaults to `wishlist.db` in the project root. Set this when using a Railway Volume for persistence. |
 
 To set up Google OAuth credentials:
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials

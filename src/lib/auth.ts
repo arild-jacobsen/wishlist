@@ -75,17 +75,34 @@ export function verifyOTPToken(db: Db, email: string, token: string): boolean {
   return true;
 }
 
-// Sends (or in this mock, logs) the OTP code to the user's email.
+// Sends the OTP code to the user's email.
 //
-// MOCK IMPLEMENTATION: This currently prints the code to the server console
-// instead of sending a real email. In development, look for lines like:
-//   [OTP] Sending code 483921 to user@example.com
-//
-// To wire up real email delivery, replace the console.log with a call to
-// a service such as Resend, SendGrid, or Nodemailer. Keep the same function
-// signature so callers do not need to change.
-export function sendOTPEmail(email: string, token: string): string {
-  console.log(`[OTP] Sending code ${token} to ${email}`);
+// In production (RESEND_API_KEY set): delivers via Resend.
+// In development (no API key): falls back to logging the code to the console
+// so the dev server remains usable without email credentials.
+export async function sendOTPEmail(email: string, token: string): Promise<string> {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    // Dev fallback — log the code so it can be copied from the server console.
+    console.log(`[OTP] Sending code ${token} to ${email}`);
+    return token;
+  }
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(apiKey);
+
+  await resend.emails.send({
+    from: "Wishlist <noreply@" + (process.env.RESEND_DOMAIN ?? "wishlist.app") + ">",
+    to: email,
+    subject: "Your login code",
+    html: `
+      <p>Your login code for Wishlist is:</p>
+      <p style="font-size:32px;font-weight:bold;letter-spacing:4px">${token}</p>
+      <p>This code expires in 15 minutes. If you didn't request this, you can ignore this email.</p>
+    `,
+  });
+
   return token;
 }
 

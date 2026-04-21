@@ -28,9 +28,10 @@ export async function POST(request: NextRequest) {
   const db = getDb();
   // Generate a 6-digit code, store it in otp_tokens with a 15-min expiry.
   const token = createOTPToken(db, email);
-  // In development this logs the code to the server console.
-  // In production, replace sendOTPEmail with real email delivery.
-  sendOTPEmail(email, token);
+  // In development (no RESEND_API_KEY) this logs the code to the server console.
+  // In production it delivers via Resend. Fire-and-forget is intentional: if
+  // email delivery fails the user can request another code.
+  await sendOTPEmail(email, token);
 
   return NextResponse.json({ ok: true });
 }
