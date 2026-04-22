@@ -15,7 +15,8 @@
     "next": "^15.1.0",
     "next-auth": "^5.0.0-beta.25",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "resend": "^6.12.2"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-arm64-gnu": "^4.60.1"
